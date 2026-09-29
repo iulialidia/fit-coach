@@ -1,0 +1,505 @@
+<title>CarmenFit Coach</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=Figtree:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap">
+<style>
+/* Layout: one mobile-first column; weekly plates up top, generator in the middle, progress & history below */
+:root{
+  --bg:#F1F2F6; --surface:#FFFFFF; --sunk:#E7E9F0; --fg:#15161C; --muted:#5E6172; --line:#D5D8E2;
+  --accent:#C2185B; --accent-ink:#FFFFFF; --accent-soft:#F8DDE8; --iron:#2B2E3A;
+  --good:#1E7F4F; --good-soft:#DDF2E6; --warn:#A35D00; --warn-soft:#FBEBD2;
+  --display:"Bricolage Grotesque",ui-sans-serif,system-ui,sans-serif;
+  --body:"Figtree",ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif;
+  --mono:"JetBrains Mono",ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#111218; --surface:#1B1C24; --sunk:#252733; --fg:#ECEDF3; --muted:#9FA2B4; --line:#343746;
+  --accent:#F06292; --accent-ink:#1A0B11; --accent-soft:#3D1A28; --iron:#C9CCD9;
+  --good:#5CCB92; --good-soft:#15301F; --warn:#F0B35A; --warn-soft:#382711; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#111218; --surface:#1B1C24; --sunk:#252733; --fg:#ECEDF3; --muted:#9FA2B4; --line:#343746;
+  --accent:#F06292; --accent-ink:#1A0B11; --accent-soft:#3D1A28; --iron:#C9CCD9;
+  --good:#5CCB92; --good-soft:#15301F; --warn:#F0B35A; --warn-soft:#382711; color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--fg);font:16px/1.5 var(--body)}
+.wrap{max-width:720px;margin:0 auto;padding:20px 16px 48px;display:flex;flex-direction:column;gap:18px}
+h1,h2,h3{font-family:var(--display);margin:0;text-wrap:balance;letter-spacing:-.01em}
+h1{font-size:clamp(28px,7vw,40px);font-weight:800;line-height:1.05}
+h2{font-size:20px;font-weight:700}
+.eyebrow{font-size:12px;text-transform:uppercase;letter-spacing:.12em;color:var(--muted);font-weight:600}
+.muted{color:var(--muted)}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:18px;display:flex;flex-direction:column;gap:14px;min-width:0}
+header{display:flex;flex-direction:column;gap:6px}
+
+/* Week plates */
+.week{display:grid;grid-template-columns:auto 1fr;gap:18px;align-items:center}
+.plates{display:flex;gap:10px}
+.plate{width:54px;height:54px;border-radius:50%;border:3px solid var(--line);display:grid;place-items:center;position:relative;background:var(--sunk);transition:transform .25s}
+.plate::after{content:"";width:12px;height:12px;border-radius:50%;background:var(--bg);border:2px solid var(--line)}
+.plate.on{background:var(--accent);border-color:var(--accent)}
+.plate.on::after{border-color:var(--accent-ink);background:var(--accent)}
+.plate.pop{animation:pop .5s ease}
+@keyframes pop{50%{transform:scale(1.18)}}
+.weektext{display:flex;flex-direction:column;gap:2px;min-width:0}
+.big{font-family:var(--display);font-size:30px;font-weight:800;line-height:1}
+.days{display:grid;grid-template-columns:repeat(7,1fr);gap:6px}
+.day{display:flex;flex-direction:column;align-items:center;gap:4px;font-size:12px;color:var(--muted)}
+.dot{width:100%;max-width:38px;aspect-ratio:1;border-radius:9px;background:var(--sunk);border:1px solid var(--line);display:grid;place-items:center;font-weight:700;font-size:13px;color:var(--muted)}
+.dot.done{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.dot.today{outline:2px solid var(--fg);outline-offset:2px}
+
+/* Mission */
+.mission{flex-direction:row;align-items:flex-start;gap:14px}
+.mission .tag{flex:none;font-size:12px;font-weight:700;padding:4px 10px;border-radius:999px;background:var(--accent-soft);color:var(--accent)}
+.mission.ok .tag{background:var(--good-soft);color:var(--good)}
+.mission.urgent .tag{background:var(--warn-soft);color:var(--warn)}
+.mission p{margin:2px 0 0}
+
+/* Generator */
+.seg{display:inline-grid;grid-template-columns:1fr 1fr;background:var(--sunk);border-radius:10px;padding:4px;gap:4px;width:max-content;max-width:100%}
+.seg button{border:0;background:transparent;color:var(--muted);font:600 15px var(--body);padding:8px 18px;border-radius:7px;cursor:pointer}
+.seg button[aria-pressed="true"]{background:var(--surface);color:var(--fg);box-shadow:0 1px 3px rgb(0 0 0 / .12)}
+label{font-weight:600;font-size:14px}
+textarea,input[type=text]{width:100%;font:15px/1.45 var(--body);color:var(--fg);background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:10px 12px;resize:vertical}
+textarea:focus-visible,input:focus-visible,button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chip{border:1px solid var(--line);background:var(--surface);color:var(--fg);font:500 13px var(--body);padding:5px 10px;border-radius:999px;cursor:pointer}
+.chip:hover{border-color:var(--accent)}
+.row{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+.btn{border:0;border-radius:10px;font:700 16px var(--body);padding:13px 20px;cursor:pointer;display:inline-flex;align-items:center;gap:8px}
+.btn.primary{background:var(--accent);color:var(--accent-ink);flex:1 1 200px;justify-content:center;font-size:17px}
+.btn.primary:disabled{opacity:.6;cursor:progress}
+.btn.ghost{background:var(--sunk);color:var(--fg)}
+.btn.done{background:var(--iron);color:var(--bg)}
+.btn.small{font-size:14px;padding:8px 12px}
+.outwrap{position:relative;min-width:0}
+pre.out{margin:0;font:13.5px/1.55 var(--mono);background:var(--sunk);border:1px solid var(--line);border-radius:10px;padding:14px;white-space:pre-wrap;word-break:break-word;max-height:70vh;overflow:auto}
+.status{font-size:14px;color:var(--muted);min-height:1.4em}
+.status.err{color:var(--warn)}
+.confirm{background:var(--sunk);border-radius:10px;padding:12px;display:flex;flex-direction:column;gap:10px}
+
+/* Progress */
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.stat{background:var(--sunk);border-radius:10px;padding:12px;display:flex;flex-direction:column;gap:2px;min-width:0}
+.stat b{font-family:var(--display);font-size:26px;line-height:1;font-variant-numeric:tabular-nums}
+.stat span{font-size:12px;color:var(--muted)}
+.xpbar{height:10px;border-radius:999px;background:var(--sunk);overflow:hidden}
+.xpbar i{display:block;height:100%;background:var(--accent);border-radius:999px;transition:width .6s}
+.badges{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px}
+.badge{border:1px dashed var(--line);border-radius:10px;padding:10px;display:flex;flex-direction:column;gap:2px;color:var(--muted);font-size:13px}
+.badge strong{font-size:14px;color:var(--muted)}
+.badge.got{border-style:solid;border-color:var(--accent);background:var(--accent-soft);color:var(--fg)}
+.badge.got strong{color:var(--accent)}
+
+/* History */
+.hist{display:flex;flex-direction:column;gap:8px;margin:0;padding:0;list-style:none}
+.hist li{border:1px solid var(--line);border-radius:10px;padding:10px 12px;display:flex;flex-direction:column;gap:6px}
+.hist .top{display:flex;justify-content:space-between;gap:8px;align-items:baseline;flex-wrap:wrap}
+.hist .loc{font-size:12px;font-weight:700;padding:2px 8px;border-radius:999px;background:var(--sunk)}
+.hist details summary{cursor:pointer;font-size:13px;color:var(--muted)}
+.hist pre{font:12.5px/1.5 var(--mono);white-space:pre-wrap;margin:6px 0 0}
+.empty{padding:18px;text-align:center;color:var(--muted);border:1px dashed var(--line);border-radius:10px}
+details.set summary{cursor:pointer;font-weight:700;font-family:var(--display);font-size:18px}
+.toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--iron);color:var(--bg);padding:10px 16px;border-radius:10px;font-weight:600;opacity:0;pointer-events:none;transition:opacity .25s}
+.toast.show{opacity:1}
+@media (max-width:460px){.week{grid-template-columns:1fr}.plate{width:46px;height:46px}.stats{gap:6px}.stat b{font-size:22px}}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+
+<div class="wrap">
+  <header>
+    <span class="eyebrow">CarmenFit · 3 blocuri · 3 antrenamente / săptămână</span>
+    <h1>Salut, Iulia! Hai la sală.</h1>
+  </header>
+
+  <section class="card" aria-labelledby="wk">
+    <div class="week">
+      <div class="plates" id="plates" aria-hidden="true"><div class="plate"></div><div class="plate"></div><div class="plate"></div></div>
+      <div class="weektext">
+        <span class="eyebrow" id="wk">Săptămâna asta</span>
+        <span class="big" id="weekCount">0 / 3</span>
+        <span class="muted" id="weekMsg">Încarc progresul…</span>
+      </div>
+    </div>
+    <div class="days" id="days"></div>
+  </section>
+
+  <section class="card mission" id="mission">
+    <span class="tag" id="missionTag">Azi</span>
+    <div><h3 id="missionTitle">Misiunea zilei</h3><p class="muted" id="missionText">Se încarcă…</p></div>
+  </section>
+
+  <section class="card" aria-labelledby="gen">
+    <div class="row" style="justify-content:space-between">
+      <h2 id="gen">Antrenamentul de azi</h2>
+      <div class="seg" role="group" aria-label="Sală">
+        <button type="button" id="locDeva" aria-pressed="true">Deva</button>
+        <button type="button" id="locCluj" aria-pressed="false">Cluj</button>
+      </div>
+    </div>
+    <label for="prefs">Preferințele de azi</label>
+    <textarea id="prefs" rows="3" placeholder="ex: vreau Banded Hip Thrust la 1A și Lateral Kettlebell Lunge în Blocul B; am 50 de minute"></textarea>
+    <div class="chips" id="chips">
+      <button type="button" class="chip">Am doar 45 min</button>
+      <button type="button" class="chip">Mă dor picioarele de ieri</button>
+      <button type="button" class="chip">Mai mult focus pe hip dips</button>
+      <button type="button" class="chip">Fără sled azi</button>
+      <button type="button" class="chip">Crește greutățile puțin</button>
+    </div>
+    <div class="row">
+      <button type="button" class="btn primary" id="genBtn">Generate</button>
+      <button type="button" class="btn ghost" id="stopBtn" hidden>Stop</button>
+    </div>
+    <div class="status" id="status" role="status"></div>
+    <div class="outwrap" id="outWrap" hidden>
+      <pre class="out" id="out"></pre>
+    </div>
+    <div class="row" id="outActions" hidden>
+      <button type="button" class="btn ghost" id="copyBtn">Copy</button>
+      <button type="button" class="btn done" id="doneBtn">✓ Am terminat antrenamentul</button>
+    </div>
+    <div class="confirm" id="confirm" hidden>
+      <label for="doneNote">Cum a mers? (opțional: kg folosite, ce a fost greu) — le folosesc la următorul antrenament</label>
+      <input type="text" id="doneNote" placeholder="ex: hip thrust 40 kg ușor, kickback 35 kg L mai slab">
+      <div class="row">
+        <button type="button" class="btn done small" id="saveDone">Salvează antrenamentul</button>
+        <button type="button" class="btn ghost small" id="cancelDone">Renunță</button>
+      </div>
+    </div>
+  </section>
+
+  <section class="card" aria-labelledby="prog">
+    <h2 id="prog">Progres</h2>
+    <div class="stats">
+      <div class="stat"><b id="sTotal">0</b><span>antrenamente</span></div>
+      <div class="stat"><b id="sStreak">0</b><span>săpt. la rând 3/3</span></div>
+      <div class="stat"><b id="sLevel">1</b><span id="sLevelName">Nivel</span></div>
+    </div>
+    <div>
+      <div class="row" style="justify-content:space-between;font-size:13px"><span class="muted" id="xpText">0 XP</span><span class="muted" id="xpNext"></span></div>
+      <div class="xpbar"><i id="xpFill" style="width:0%"></i></div>
+    </div>
+    <div class="badges" id="badges"></div>
+  </section>
+
+  <section class="card" aria-labelledby="his">
+    <h2 id="his">Istoric</h2>
+    <ul class="hist" id="hist"><li class="empty">Aici apar antrenamentele bifate. Generează unul și apasă „Am terminat antrenamentul”.</li></ul>
+  </section>
+
+  <section class="card">
+    <details class="set" id="setDetails">
+      <summary>Greutăți de referință & reguli</summary>
+      <div style="display:flex;flex-direction:column;gap:10px;margin-top:12px">
+        <label for="weights">Greutăți de referință (le folosesc când generez)</label>
+        <textarea id="weights" rows="6"></textarea>
+        <div class="row"><button type="button" class="btn ghost small" id="saveWeights">Salvează greutățile</button><span class="muted" id="wStatus" style="font-size:13px"></span></div>
+        <p class="muted" style="margin:0;font-size:14px">Reguli fixe: fără deadlifts; Dumbbell Shoulder Press în loc de aparat; leg press doar izolat per picior; Kneeling Cable Glute Kickback doar la Deva; nume de exerciții în engleză; fără câmpuri goale în text.</p>
+      </div>
+    </details>
+  </section>
+</div>
+<div class="toast" id="toast" role="status"></div>
+
+<script>
+const $ = id => document.getElementById(id);
+const DAY_RO = ["L","Ma","Mi","J","V","S","D"];
+const WEEKDAY_EN = ["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"];
+let db = null, sample = null, ctl = null;
+let sessions = [];            // [{id, date, location, title, note, text}]
+let settings = {};            // {weights, lastWorkout, lastLocation, lastPrefs}
+let location_ = "Deva";
+
+/* ---------- dates ---------- */
+const pad = n => String(n).padStart(2,"0");
+const isoDate = d => `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
+const parse = s => { const [y,m,d] = s.split("-").map(Number); return new Date(y,m-1,d); };
+function monday(d){ const x = new Date(d.getFullYear(),d.getMonth(),d.getDate()); const wd=(x.getDay()+6)%7; x.setDate(x.getDate()-wd); return x; }
+const weekKey = d => isoDate(monday(d));
+const today = () => new Date();
+
+/* ---------- gamification ---------- */
+const LEVELS = ["Începătoare","Constantă","Puternică","Sculptată","Atletă","Legendă CarmenFit"];
+function computeStats(){
+  const byWeek = {};
+  const dates = new Set();
+  for (const s of sessions){ dates.add(s.date); }
+  for (const d of dates){ const k = weekKey(parse(d)); byWeek[k] = (byWeek[k]||0)+1; }
+  const total = dates.size;
+  // XP: 100 per workout day, +150 for every week that hits 3
+  let xp = total*100;
+  for (const k in byWeek) if (byWeek[k] >= 3) xp += 150;
+  // streak of full weeks, counting the current week only if it's already full
+  let streak = 0; const cur = monday(today());
+  let w = new Date(cur);
+  if ((byWeek[isoDate(w)]||0) < 3) w.setDate(w.getDate()-7);
+  while ((byWeek[isoDate(w)]||0) >= 3){ streak++; w.setDate(w.getDate()-7); }
+  let bestStreak = 0, run = 0;
+  const keys = Object.keys(byWeek).sort();
+  if (keys.length){
+    let k = parse(keys[0]);
+    while (k <= cur){ if ((byWeek[isoDate(k)]||0)>=3){run++;bestStreak=Math.max(bestStreak,run);} else run=0; k.setDate(k.getDate()+7); }
+  }
+  const locs = new Set(sessions.map(s=>s.location));
+  const level = Math.min(LEVELS.length, Math.floor(xp/600)+1);
+  return {byWeek,total,xp,streak,bestStreak,locs,level};
+}
+const BADGES = [
+  {id:"first", name:"Primul pas", desc:"Primul antrenament bifat", test:s=>s.total>=1},
+  {id:"week", name:"Săptămână 3/3", desc:"3 antrenamente într-o săptămână", test:s=>Object.values(s.byWeek).some(v=>v>=3)},
+  {id:"ten", name:"10 antrenamente", desc:"Consecvența construiește tonus", test:s=>s.total>=10},
+  {id:"streak4", name:"O lună perfectă", desc:"4 săptămâni la rând cu 3/3", test:s=>s.bestStreak>=4},
+  {id:"both", name:"Deva + Cluj", desc:"Ai antrenat în ambele săli", test:s=>s.locs.has("Deva")&&s.locs.has("Cluj")},
+  {id:"25", name:"25 antrenamente", desc:"Nivel serios", test:s=>s.total>=25},
+];
+
+function render(){
+  const st = computeStats();
+  const wk = weekKey(today());
+  const doneWeek = Math.min(st.byWeek[wk]||0, 7);
+  const plates = [...$("plates").children];
+  plates.forEach((p,i)=>p.classList.toggle("on", i < doneWeek));
+  $("weekCount").textContent = `${Math.min(doneWeek,3)} / 3` + (doneWeek>3?` (+${doneWeek-3})`:"");
+  const need = Math.max(0, 3-doneWeek);
+  const t = today(); const wdIdx = (t.getDay()+6)%7; const daysLeft = 7-wdIdx;
+  const doneToday = sessions.some(s=>s.date===isoDate(t));
+  $("weekMsg").textContent = need===0 ? "Obiectiv atins! Orice extra e bonus." :
+    `Mai ai ${need} ${need===1?"antrenament":"antrenamente"} în ${daysLeft} ${daysLeft===1?"zi":"zile"}.`;
+
+  // day strip
+  const mon = monday(t); const dates = new Set(sessions.map(s=>s.date));
+  $("days").innerHTML = "";
+  for (let i=0;i<7;i++){ const d=new Date(mon); d.setDate(mon.getDate()+i);
+    const el=document.createElement("div"); el.className="day";
+    const dot=document.createElement("div"); dot.className="dot"+(dates.has(isoDate(d))?" done":"")+(i===wdIdx?" today":"");
+    dot.textContent=d.getDate(); el.append(dot, DAY_RO[i]); $("days").append(el); }
+
+  // mission of the day
+  const yest = new Date(t); yest.setDate(t.getDate()-1);
+  const trainedYesterday = dates.has(isoDate(yest));
+  const m = $("mission"); m.classList.remove("ok","urgent");
+  const availableDays = daysLeft - (doneToday?1:0);
+  if (doneToday){ m.classList.add("ok"); $("missionTag").textContent="Bifat";
+    $("missionTitle").textContent="Antrenament făcut azi 💪";
+    $("missionText").textContent="Recuperare: 2 L apă, proteină la fiecare masă și 5 min de stretching seara. Mâine poți face 8.000 de pași ușori."; }
+  else if (need===0){ m.classList.add("ok"); $("missionTag").textContent="Bonus";
+    $("missionTitle").textContent="Obiectivul săptămânii e atins";
+    $("missionText").textContent="Azi e zi liberă sau bonus: 30–40 min incline walking (12%, 4–4.5 km/h) sau o plimbare călare contează ca minute active pe Garmin."; }
+  else if (need >= availableDays){ m.classList.add("urgent"); $("missionTag").textContent="Azi contează";
+    $("missionTitle").textContent="Azi e zi de sală";
+    $("missionText").textContent=`Ai nevoie de ${need} în ${availableDays} ${availableDays===1?"zi":"zile"} ca să închizi săptămâna 3/3. Generează și pornește Garmin-ul.`; }
+  else if (trainedYesterday){ $("missionTag").textContent="Recuperare";
+    $("missionTitle").textContent="Zi de recuperare activă";
+    $("missionText").textContent="Ai antrenat ieri. Azi: 8.000 de pași + 10 min mobilitate de șold (hip circles, figure-4, 90/90). Mâine revii la sală."; }
+  else { $("missionTag").textContent="Azi";
+    $("missionTitle").textContent="Zi bună de antrenament";
+    $("missionText").textContent=`Mai ai ${need} din 3 săptămâna asta. Dacă mergi azi, generează antrenamentul mai jos.`; }
+
+  // stats
+  $("sTotal").textContent = st.total;
+  $("sStreak").textContent = st.streak;
+  $("sLevel").textContent = st.level;
+  $("sLevelName").textContent = "nivel · " + LEVELS[st.level-1];
+  const into = st.xp % 600; const pct = st.level>=LEVELS.length ? 100 : into/600*100;
+  $("xpFill").style.width = pct+"%";
+  $("xpText").textContent = `${st.xp} XP`;
+  $("xpNext").textContent = st.level>=LEVELS.length ? "nivel maxim" : `${600-into} XP până la „${LEVELS[st.level]}”`;
+  $("badges").innerHTML = "";
+  for (const b of BADGES){ const got=b.test(st); const el=document.createElement("div"); el.className="badge"+(got?" got":"");
+    const s=document.createElement("strong"); s.textContent=(got?"★ ":"☆ ")+b.name; el.append(s, b.desc); $("badges").append(el); }
+
+  // history
+  const h = $("hist"); h.innerHTML="";
+  if (!sessions.length){ const li=document.createElement("li"); li.className="empty"; li.textContent="Aici apar antrenamentele bifate. Generează unul și apasă „Am terminat antrenamentul”."; h.append(li); }
+  for (const s of sessions.slice(0,30)){
+    const li=document.createElement("li");
+    const top=document.createElement("div"); top.className="top";
+    const d=parse(s.date); const title=document.createElement("strong");
+    title.textContent = d.toLocaleDateString("ro-RO",{weekday:"long",day:"numeric",month:"long"});
+    const right=document.createElement("div"); right.className="row"; right.style.gap="6px";
+    const loc=document.createElement("span"); loc.className="loc"; loc.textContent=s.location||"—";
+    const del=document.createElement("button"); del.className="chip"; del.textContent="Șterge";
+    del.onclick=()=>{ if(del.dataset.arm){ removeSession(s.id); } else { del.dataset.arm="1"; del.textContent="Sigur? Apasă iar"; setTimeout(()=>{del.dataset.arm="";del.textContent="Șterge";},3000);} };
+    right.append(loc,del); top.append(title,right); li.append(top);
+    if (s.note){ const n=document.createElement("div"); n.className="muted"; n.style.fontSize="14px"; n.textContent=s.note; li.append(n); }
+    if (s.text){ const det=document.createElement("details"); const sum=document.createElement("summary"); sum.textContent="Vezi antrenamentul";
+      const pre=document.createElement("pre"); pre.textContent=s.text; det.append(sum,pre); li.append(det); }
+    h.append(li);
+  }
+}
+
+/* ---------- prompt ---------- */
+function buildPrompt(prefs){
+  const t = today();
+  const header = `${location_.toUpperCase()} WORKOUT – ${WEEKDAY_EN[t.getDay()]}, ${pad(t.getDate())}.${pad(t.getMonth()+1)}.${t.getFullYear()}`;
+  const recent = sessions.slice(0,3).map(s=>`--- ${s.date} (${s.location})${s.note?"\nFeedback: "+s.note:""}\n${(s.text||"").slice(0,1800)}`).join("\n\n") || "(none logged yet)";
+  const locRules = location_==="Deva"
+    ? "Location: DEVA home gym. Kneeling Cable Glute Kickback IS available (use it at least once, usually Block B1 or Block C1). A training sled is available for conditioning."
+    : "Location: CLUJ gym with Olicrom (Made in Italy) machines. Kneeling Cable Glute Kickback is FORBIDDEN here. Use single-leg 45° incline leg press, cable abductions, cable squat walks, hip thrust machine and free weights instead. Do not assume a sled; use incline walking or other conditioning.";
+  return `You are an expert personal trainer following the CarmenFit method. Write ONE gym workout for Iulia for today.
+
+CLIENT GOALS: lose the last 7 kg while building muscle definition (body recomposition); tone lower abs, outer glutes / hip dips (gluteus medius & minimus), firmer skin to reduce the look of cellulite. Never promise spot fat loss.
+
+${locRules}
+
+GOLDEN RULES (never break):
+- NO deadlifts of any kind (classic, Romanian, stiff-leg, single-leg, etc.).
+- If any shoulder work appears, use Dumbbell Shoulder Press (never machine press) to balance left/right strength.
+- Leg press is ALWAYS Single-Leg 45° Incline Leg Press, one leg at a time.
+- Prefer standing, cable and mat exercises over seated ones; unilateral where it makes sense.
+- Exercise names always in English.
+
+STRUCTURE – exactly 3 blocks, exactly 3 exercises each, each block done 3x:
+Block A: 1) compound lower body / glutes (rotate: Banded Sumo Squat 14-16 reps with free weight, Single-Leg 45° Incline Leg Press, Hip Thrust / Banded Hip Thrust, Step-Up, Lunge variations) 2) plank variation (dynamic or isometric; change hand/foot position vs. recent workouts) 3) LOWER ABS exercise, 20-30 reps (leg lifts, reverse crunch, dead bug, foam roller leg circles, scissor/flutter kicks, slow mountain climbers).
+Block B: 1) outer thigh / abductor / glute medius / hamstring (rotate: Standing Lateral Cable Hip Abduction – Position 1, Kneeling Cable Glute Kickback (Deva only), band walks, clamshells, lateral lunges) 2) a DIFFERENT plank or lateral core exercise (side plank variations, Standing Cable Core Twist) 3) another core / lower abs exercise, different from Block A.
+Block C: 1) explosive or isometric lower-body finisher that keeps heart rate high (wall sit, pulse squat, squat jump, sled push, cable/machine option) 2) cardio finisher: Double Mountain Climbers 40 reps (or diagonal variant), optionally combined with sled push 3) High Plank Hold 1 min (or other final isometric hold).
+Rest line "Rest: 60-90 sec" after Block A and after Block B.
+
+REFERENCE WEIGHTS (use them for "@ x kg"; if the feedback below says something felt easy, progress ~5-10%):
+${settings.weights || "(none)"}
+
+RECENT WORKOUTS (choose different exercises and plank/abs variations than these, unless today's request asks for something specific):
+${recent}
+
+TODAY'S REQUEST FROM IULIA (highest priority – if she names an exercise for a specific slot, put exactly that exercise in exactly that slot; "1A" / "A1" means Block A exercise 1):
+${prefs.trim() || "(no special request)"}
+
+OUTPUT FORMAT – plain text only, no markdown, no code fences, no ** or #, nothing before or after. It is pasted straight into Google Calendar. NEVER include blanks like "___", NEVER include a Notes / total time / avg HR / "how it felt" section, no L/R tracking lines. Use "•" bullets. Follow this template exactly:
+
+${header}
+Garmin: Strength – Free (start now, stop after the cool-down)
+
+Warm-up:
+10 min incline walking
+• 12% incline • 4.0–4.5 km/h
+
+Dynamic activation:
+• (3-4 short activation drills with reps)
+
+Block A – Glutes & Lower Abs (3x)
+• Exercise name (short cue in parentheses) – 3x12-15 reps @ x kg
+• ...
+• ...
+
+Rest: 60-90 sec
+
+Block B – (short title) (3x)
+• ...
+• ...
+• ...
+
+Rest: 60-90 sec
+
+Block C – (short title) (3x)
+• ...
+• ...
+• ...
+
+Cool-down (Garmin still running):
+5 min stretching – (list)`;
+}
+
+/* ---------- generate ---------- */
+function setStatus(msg, err){ const s=$("status"); s.textContent=msg||""; s.classList.toggle("err",!!err); }
+function showOut(text){ $("out").textContent=text; $("outWrap").hidden=!text; $("outActions").hidden=!text; }
+const clean = t => t.replace(/^```[a-z]*\s*/i,"").replace(/```\s*$/,"").replace(/\*\*/g,"").trim();
+const ERR = {
+  not_granted:"Aplicația nu are voie să folosească Claude. Permite accesul și încearcă din nou.",
+  sampling_disabled:"Generarea nu e disponibilă pe contul acesta.",
+  rate_limited:"Prea multe cereri acum. Încearcă din nou peste un minut.",
+  session_expired:"Sesiunea a expirat. Autentifică-te din nou în Claude.",
+  refused:"Cererea a fost refuzată. Reformulează preferințele și încearcă din nou.",
+};
+async function generate(){
+  if (!sample){ setStatus("Generarea merge doar când deschizi aplicația în Claude.", true); return; }
+  const prefs = $("prefs").value;
+  ctl = new AbortController();
+  $("genBtn").disabled=true; $("genBtn").textContent="Generez…"; $("stopBtn").hidden=false;
+  setStatus("Claude compune antrenamentul… (10–40 sec)");
+  let got=false;
+  try{
+    const r = await sample(buildPrompt(prefs), {signal:ctl.signal, cache:false,
+      onText:({text})=>{ got=true; setStatus("Scriu…"); showOut(clean(text)); }});
+    const final = clean(r.text);
+    showOut(final);
+    setStatus(r.truncated ? "Răspunsul a fost tăiat. Mai apasă o dată Generate." : "Gata! Apasă Copy și pune-l în calendar.");
+    await saveSettings({lastWorkout:final, lastLocation:location_, lastPrefs:prefs});
+  }catch(e){
+    if (e && e.code==="cancelled"){ setStatus("Oprit."); if(e.text) showOut(clean(e.text)); }
+    else { setStatus(ERR[e?.code] || "Nu am reușit să generez. Încearcă din nou.", true); if (e?.text) showOut(clean(e.text)); }
+  }finally{
+    $("genBtn").disabled=false; $("genBtn").textContent="Generate"; $("stopBtn").hidden=true; ctl=null;
+  }
+}
+
+/* ---------- storage ---------- */
+async function saveSettings(patch){
+  settings = {...settings, ...patch};
+  if (!db) return;
+  const {_loaded, ...body} = settings;
+  try{ await db.doc("settings/main").set(body); }catch(e){}
+}
+async function removeSession(id){
+  sessions = sessions.filter(s=>s.id!==id); render();
+  if (db) try{ await db.doc("sessions/"+id).delete(); }catch(e){}
+}
+async function logDone(){
+  const text = $("out").textContent.trim();
+  const note = $("doneNote").value.trim();
+  const date = isoDate(today());
+  const title = (text.split("\n")[0]||"").slice(0,120);
+  const rec = {date, ts: Date.now(), location: location_, title, note, text: text.slice(0,12000)};
+  $("confirm").hidden=true; $("doneNote").value="";
+  const before = computeStats();
+  if (db){
+    try{ const ref = await db.collection("sessions").add(rec); if(!sessions.some(s=>s.id===ref.id)){ sessions.unshift({id:ref.id,...rec}); } }
+    catch(e){ toast(e?.code==="quota_exceeded"?"Spațiul e plin. Șterge câteva antrenamente vechi.":"Nu am putut salva. Încearcă din nou."); return; }
+  } else { sessions.unshift({id:"local"+Date.now(),...rec}); }
+  render();
+  const after = computeStats();
+  const wkCount = after.byWeek[weekKey(today())]||0;
+  const plate = $("plates").children[Math.min(wkCount,3)-1]; if(plate){plate.classList.remove("pop");void plate.offsetWidth;plate.classList.add("pop");}
+  let msg = `+100 XP`;
+  if (wkCount===3 && (before.byWeek[weekKey(today())]||0)<3) msg = "Săptămână 3/3! +250 XP 🎉";
+  if (after.level>before.level) msg += ` · Nivel nou: ${LEVELS[after.level-1]}`;
+  toast(msg);
+}
+function toast(m){ const t=$("toast"); t.textContent=m; t.classList.add("show"); clearTimeout(toast._t); toast._t=setTimeout(()=>t.classList.remove("show"),2800); }
+
+/* ---------- wiring ---------- */
+function setLoc(l){ location_=l; $("locDeva").setAttribute("aria-pressed", l==="Deva"); $("locCluj").setAttribute("aria-pressed", l==="Cluj"); try{localStorage.setItem("cf_loc",l);}catch(e){} }
+$("locDeva").onclick=()=>setLoc("Deva");
+$("locCluj").onclick=()=>setLoc("Cluj");
+$("chips").addEventListener("click",e=>{ if(e.target.classList.contains("chip")){ const v=$("prefs").value.trim(); $("prefs").value=(v?v+"; ":"")+e.target.textContent; $("prefs").focus(); }});
+$("prefs").addEventListener("input",()=>{ try{localStorage.setItem("cf_prefs",$("prefs").value);}catch(e){} });
+$("genBtn").onclick=generate;
+$("stopBtn").onclick=()=>ctl?.abort();
+$("copyBtn").onclick=async()=>{ const txt=$("out").textContent;
+  try{ await navigator.clipboard.writeText(txt); toast("Copiat! Lipește-l în Google Calendar."); }
+  catch(e){ const r=document.createRange(); r.selectNodeContents($("out")); const s=getSelection(); s.removeAllRanges(); s.addRange(r); toast("Textul e selectat. Apasă Copy din meniul telefonului."); } };
+$("doneBtn").onclick=()=>{ $("confirm").hidden=false; $("doneNote").focus(); };
+$("cancelDone").onclick=()=>{ $("confirm").hidden=true; };
+$("saveDone").onclick=logDone;
+$("saveWeights").onclick=async()=>{ await saveSettings({weights:$("weights").value}); $("wStatus").textContent="Salvat."; setTimeout(()=>$("wStatus").textContent="",2000); };
+
+try{ const l=localStorage.getItem("cf_loc"); if(l) setLoc(l); const p=localStorage.getItem("cf_prefs"); if(p) $("prefs").value=p; }catch(e){}
+render();
+
+(async()=>{
+  const c = window.claude;
+  if (!c?.use){ setStatus("Deschide aplicația în Claude ca să poți genera și salva.", true); return; }
+  c.use("sample").then(s=>{ sample=s; if(!s){ $("genBtn").disabled=true; setStatus("Generarea nu e disponibilă aici.", true);} });
+  db = await c.use("db");
+  if (!db){ $("weekMsg").textContent="Progresul nu se poate salva aici."; return; }
+  db.collection("sessions").orderBy("ts","desc").limit(500).onSnapshot(snap=>{
+    sessions = snap.docs.map(d=>({id:d.id, ...d.data()})); render();
+  }, ()=>{});
+  db.doc("settings/main").onSnapshot(snap=>{
+    if (!snap.exists) return;
+    const d = snap.data(); const first = !settings._loaded;
+    settings = {...d, _loaded:true};
+    if (document.activeElement !== $("weights")) $("weights").value = d.weights || "";
+    if (first && d.lastWorkout && !$("out").textContent){ showOut(d.lastWorkout); setStatus("Ultimul antrenament generat. Apasă Generate pentru unul nou."); }
+  }, ()=>{});
+})();
+</script>
