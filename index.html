@@ -21,6 +21,8 @@
   --accent:#F06292; --accent-ink:#1A0B11; --accent-soft:#3D1A28; --iron:#C9CCD9;
   --good:#5CCB92; --good-soft:#15301F; --warn:#F0B35A; --warn-soft:#382711; color-scheme:dark}
 *{box-sizing:border-box}
+[hidden]{display:none!important}
+.status a{color:var(--accent);font-weight:700}
 body{background:var(--bg);color:var(--fg);font:16px/1.5 var(--body)}
 .wrap{max-width:720px;margin:0 auto;padding:20px 16px 48px;display:flex;flex-direction:column;gap:18px}
 h1,h2,h3{font-family:var(--display);margin:0;text-wrap:balance;letter-spacing:-.01em}
@@ -487,7 +489,12 @@ render();
 
 (async()=>{
   const c = window.claude;
-  if (!c?.use){ setStatus("Deschide aplicația în Claude ca să poți genera și salva.", true); return; }
+  if (!c?.use){
+    $("genBtn").disabled=true;
+    const s=$("status"); s.classList.add("err");
+    s.innerHTML='Aceasta e copia de pe GitHub și nu poate genera. Deschide aplicația în Claude: <a href="https://claude.ai/artifact/RjBzXbhZKjZx4Uq3m5gc68" target="_blank" rel="noopener">CarmenFit Coach</a>';
+    return;
+  }
   c.use("sample").then(s=>{ sample=s; if(!s){ $("genBtn").disabled=true; setStatus("Generarea nu e disponibilă aici.", true);} });
   db = await c.use("db");
   if (!db){ $("weekMsg").textContent="Progresul nu se poate salva aici."; return; }
