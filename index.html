@@ -336,7 +336,10 @@ function buildPrompt(prefs){
   const header = `${location_.toUpperCase()} WORKOUT – ${WEEKDAY_EN[t.getDay()]}, ${pad(t.getDate())}.${pad(t.getMonth()+1)}.${t.getFullYear()}`;
   const recent = sessions.slice(0,3).map(s=>`--- ${s.date} (${s.location})${s.note?"\nFeedback: "+s.note:""}\n${(s.text||"").slice(0,1800)}`).join("\n\n") || "(none logged yet)";
   const locRules = location_==="Deva"
-    ? "Location: DEVA home gym. Kneeling Cable Glute Kickback IS available (use it at least once, usually Block B1 or Block C1). A training sled is available for conditioning."
+    ? `Location: DEVA home gym. Kneeling Cable Glute Kickback IS available (use it at least once, usually Block B1 or Block C1). A training sled is available for conditioning.
+DEVA-ONLY LAYOUT RULES:
+- Standing Cable Core Twist may ONLY appear as a superset with Standing Lateral Cable Hip Abduction (same cable station). Put them back to back in the same block and write the first one as "• Superset: Standing Lateral Cable Hip Abduction ... + Standing Cable Core Twist ...". If there is no Standing Lateral Cable Hip Abduction that day, do not use Standing Cable Core Twist at all.
+- The hip thrust machine and the leg press are in the back area of the gym, where there is no foam roller. In any block whose exercise 1 is a Hip Thrust variation or Single-Leg 45° Incline Leg Press, exercises 2 and 3 must NOT use a foam roller (no Foam Roller Leg Circles, no roller under the spine); use mat/bodyweight options instead.`
     : "Location: CLUJ gym with Olicrom (Made in Italy) machines. Kneeling Cable Glute Kickback is FORBIDDEN here. Use single-leg 45° incline leg press, cable abductions, cable squat walks, hip thrust machine and free weights instead. Do not assume a sled; use incline walking or other conditioning.";
   return `You are an expert personal trainer following the CarmenFit method. Write ONE gym workout for Iulia for today.
 
